@@ -1,0 +1,120 @@
+---
+title: 'Attendance'
+---
+
+## How Attendance is Measured
+
+(Insert documentation here)
+
+## The Processes
+
+Everything to know about how I implemented attedance
+
+### 🕒 User Start Time & User End Time
+
+Most of the time, the **user start time** and **user end time** are automatically determined when a user is added to an event. This ensures consistent timing while still allowing manual overrides when needed.
+
+---
+
+#### ⚙️ Default Behavior (Automatic)
+
+When a record is inserted into `user_event`, a database trigger runs and sets the user’s times **only if they are not provided**.
+
+##### Start Time Logic
+
+- If the event has a `call_date`, it is used
+- Otherwise, the event’s `start_date` is used
+
+```sql
+coalesce(call_date, start_date)
+```
+
+##### End Time Logic
+
+- The end time is calculated based on:
+  - the resolved start time (above)
+  - plus the event’s duration
+
+---
+
+#### ✏️ Manual Overrides
+
+You can manually set `start_date` and/or `end_date` when inserting a record.
+
+If values are provided:
+
+- The trigger **does not override them**
+- Your manual values are preserved
+
+##### Example (manual override via Supabase)
+
+```ts
+await supabase.from('user_event').insert({
+  event_id,
+  user_id,
+  start_date: customStart,
+  end_date: customEnd,
+})
+```
+
+---
+
+#### 🧠 Why This Exists
+
+This system ensures:
+
+- ✅ Users default to the correct arrival time (`call_date` if available)
+- ✅ No extra frontend logic required
+- ✅ Flexibility for edge cases (late arrivals, partial attendance, etc.)
+
+---
+
+#### 🔁 Summary
+
+| Scenario                     | Result                           |
+| ---------------------------- | -------------------------------- |
+| `call_date` exists           | Used as user start time          |
+| `call_date` is null          | Falls back to event `start_date` |
+| Manual `start_date` provided | Overrides automatic value        |
+| Manual `end_date` provided   | Overrides automatic value        |
+| No manual values             | Trigger calculates both          |
+
+---
+
+If you want, I can also write a companion section for:
+
+- **“What happens when an event time changes”** (this is a big one for your app)
+- or **split-time roles vs actual user time tracking** which ties into your stats system nicely
+
+## Create beautiful pages
+
+Everything you need to create world-class documentation.
+
+<Columns cols={2}>
+  <Card title="Write with MDX" icon="pen-fancy" href="/essentials/markdown">
+    Use MDX to style your docs pages.
+  </Card>
+  <Card title="Code samples" icon="code" href="/essentials/code">
+    Add sample code to demonstrate how to use your product.
+  </Card>
+  <Card title="Images" icon="image" href="/essentials/images">
+    Display images and other media.
+  </Card>
+  <Card
+    title="Reusable snippets"
+    icon="recycle"
+    href="/essentials/reusable-snippets"
+  >
+    Write once and reuse across your docs.
+  </Card>
+</Columns>
+
+## Need inspiration?
+
+<Card
+  title="See complete examples"
+  icon="stars"
+  href="https://mintlify.com/customers"
+>
+  Browse our showcase of exceptional documentation sites.
+</Card>
